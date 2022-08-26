@@ -30,7 +30,7 @@ async function init(db) {
     })
 
     knex.run = async function (query)  {
-        let sql = fs.readFileSync(`${path.resolve(__dirname, '..')}/${query.sql}.sql`, `utf8`)
+        let sql = fs.readFileSync(path.join(__dirname, `..`, `..`, `${query.sql}.sql`), `utf8`)
         log.debug(formatSqlForLogs(sql, query.params))
         
         let results = await knex.raw(sql, query.params)
