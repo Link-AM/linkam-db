@@ -1,0 +1,26 @@
+{
+  "name": "linkam-db",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Link-AM/linkam-db.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Link-AM/linkam-db/issues"
+  },
+  "homepage": "https://github.com/Link-AM/linkam-db#readme",
+  "dependencies": {
+    "knex": "^2.2.0",
+    "linkam-logs": "^1.0.1",
+    "oracledb": "^5.4.0",
+    "properties-reader": "^2.2.0"
+  }
+}
