@@ -10,7 +10,13 @@ oracledb.initOracleClient({ libDir: libDir })
 
 
 async function init(db) {
-    let credentials = authorize.getCredentials(db)
+    let creds = authorize.getCredentials(db)
+    let credentials = {
+        client: creds[`${db}.client`],
+        user: creds[`${db}.username`],
+        password: creds[`${db}.password`],
+        connectString: creds[`${db}.connectString`]
+    }
     let connection = setConnection(credentials)
     const knex = require(`knex`)({
         //debug: true,
