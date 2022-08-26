@@ -18,7 +18,7 @@
   },
   "homepage": "https://github.com/Link-AM/linkam-db#readme",
   "dependencies": {
-    "camelcase": "^7.0.0",
+    "camelcase": "^6.2.0",
     "knex": "^2.2.0",
     "linkam-logs": "^1.0.1",
     "oracledb": "^5.4.0",
