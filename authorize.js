@@ -15,8 +15,8 @@ function getCredentials(app) {
 }
 
 function getPropFile() {
-    let criteria = path.join(__dirname, `..`, `db.ini`)
-    let personal = path.join(__dirname, `..`, `personal.db.ini`)
+    let criteria = path.join(__dirname, `..`, `..`, `db.ini`)
+    let personal = path.join(__dirname, `..`, `..`, `personal.db.ini`)
     let propFile = fs.existsSync(personal) ? personal : criteria
     return propFile
 }
