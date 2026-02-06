@@ -22,12 +22,33 @@ async function init(db, credentialsFile, sqlDirectory) {
     const sqlDir = sqlDirectory || process.cwd()
     
     let creds = authorize.getCredentials(db, credentialsFile)
+    
+    // Validate required credentials
+    const client = creds[`${db}.client`]
+    if (!client) {
+        throw new Error(`Missing required credential: client for database '${db}'`)
+    }
+    
     let credentials = {
-        client: creds[`${db}.client`],
+        client: client,
         user: creds[`${db}.username`],
         password: creds[`${db}.password`],
-        connectString: creds[`${db}.connectString`]
+        connectString: creds[`${db}.connectString`],
+        host: creds[`${db}.host`],
+        database: creds[`${db}.database`]
     }
+    
+    // Validate client-specific required fields
+    if (credentials.client === 'oracledb') {
+        if (!credentials.user || !credentials.password || !credentials.connectString) {
+            throw new Error(`Missing required Oracle credentials for database '${db}': user, password, and connectString are required`)
+        }
+    } else if (credentials.client === 'pg') {
+        if (!credentials.user || !credentials.password || !credentials.host || !credentials.database) {
+            throw new Error(`Missing required PostgreSQL credentials for database '${db}': user, password, host, and database are required`)
+        }
+    }
+    
     let connection = setConnection(credentials)
     const knex = require(`knex`)({
         //debug: true,
@@ -46,26 +67,43 @@ async function init(db, credentialsFile, sqlDirectory) {
      * @param {string} query.sql - SQL filename (without .sql extension) or relative path from sqlDirectory
      * @param {Object} [query.params] - Query parameters
      * @returns {Promise<Array>} Query results
+     * @throws {Error} If SQL file not found or query execution fails
      */
     knex.run = async function (query)  {
+        if (!query || !query.sql) {
+            throw new Error('Query object with sql property is required')
+        }
+        
         const sqlPath = query.sql.endsWith('.sql') ? query.sql : `${query.sql}.sql`
         const fullPath = path.isAbsolute(sqlPath) ? sqlPath : path.join(sqlDir, sqlPath)
-        let sql = fs.readFileSync(fullPath, `utf8`)
+        
+        // Check if file exists before trying to read
+        if (!fs.existsSync(fullPath)) {
+            throw new Error(`SQL file not found: ${fullPath}`)
+        }
+        
+        let sql
+        try {
+            sql = fs.readFileSync(fullPath, `utf8`)
+        } catch (err) {
+            log.error(`Failed to read SQL file: ${fullPath}`)
+            throw err
+        }
+        
         log.debug(formatSqlForLogs(sql, query.params))
         
-        let results = await knex.raw(sql, query.params)
-            .then( (response) => {
-                if (this.client.config.client === `oracledb`) {
-                    return response
-                } else if (this.client.config.client === `pg`) {
-                    return response.rows
-                }
-            })
-            .catch(function (err) {
-                log.error(err)
-            })
-
-        return results
+        try {
+            const response = await knex.raw(sql, query.params)
+            if (this.client.config.client === `oracledb`) {
+                return response
+            } else if (this.client.config.client === `pg`) {
+                return response.rows
+            }
+            return response
+        } catch (err) {
+            log.error(`Query execution failed for file: ${query.sql}`, err)
+            throw err
+        }
     }
 
     /**
@@ -117,7 +155,7 @@ function setConnection(credentials) {
 }
 
 function formatSqlForLogs(sql, params) {
-    if (Object.keys(params).length > 0) {
+    if (params && Object.keys(params).length > 0) {
         for (let [key, value] of Object.entries(params)) {
             sql = sql.replace(`:${key}`, value)
         }
