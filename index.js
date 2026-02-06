@@ -10,8 +10,17 @@ const oracleClientSetup = require(`./oracleClientSetup`)
 const libDir = oracleClientSetup.getOracleClientPath()
 oracledb.initOracleClient({ libDir: libDir })
 
-
-async function init(db, credentialsFile) {
+/**
+ * Initialize database connection with knex
+ * @param {string} db - Database name from credentials file
+ * @param {string} [credentialsFile] - Optional path to credentials file (default: db.ini or personal.db.ini)
+ * @param {string} [sqlDirectory] - Optional directory path for SQL files (default: process.cwd())
+ * @returns {Promise<import('knex').Knex>} Configured knex instance
+ */
+async function init(db, credentialsFile, sqlDirectory) {
+    // Set default SQL directory to current working directory
+    const sqlDir = sqlDirectory || process.cwd()
+    
     let creds = authorize.getCredentials(db, credentialsFile)
     let credentials = {
         client: creds[`${db}.client`],
@@ -31,8 +40,17 @@ async function init(db, credentialsFile) {
         }
     })
 
+    /**
+     * Execute SQL from a file
+     * @param {Object} query - Query object
+     * @param {string} query.sql - SQL filename (without .sql extension) or relative path from sqlDirectory
+     * @param {Object} [query.params] - Query parameters
+     * @returns {Promise<Array>} Query results
+     */
     knex.run = async function (query)  {
-        let sql = fs.readFileSync(path.join(__dirname, `..`, `..`, `${query.sql}.sql`), `utf8`)
+        const sqlPath = query.sql.endsWith('.sql') ? query.sql : `${query.sql}.sql`
+        const fullPath = path.isAbsolute(sqlPath) ? sqlPath : path.join(sqlDir, sqlPath)
+        let sql = fs.readFileSync(fullPath, `utf8`)
         log.debug(formatSqlForLogs(sql, query.params))
         
         let results = await knex.raw(sql, query.params)
@@ -50,6 +68,12 @@ async function init(db, credentialsFile) {
         return results
     }
 
+    /**
+     * Execute SQL from a file and return rows with logging
+     * @param {string} sqlFile - SQL filename (without .sql extension) or relative path from sqlDirectory
+     * @param {Object} [params] - Query parameters
+     * @returns {Promise<Array>} Query results
+     */
     knex.getRows = async function getRows(sqlFile, params) {
         if (!params) params = {}
         let query = {
