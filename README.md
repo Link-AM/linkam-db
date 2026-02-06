@@ -58,7 +58,11 @@ Example: `C:\Users\username\AppData\Local\Temp\linkam-db-oracle-client\instantcl
 const db = require('linkam-db');
 
 async function example() {
+    // Initialize with default db.ini location
     const knex = await db.init('myDatabase');
+    
+    // Or specify custom credentials file path
+    const knex2 = await db.init('myDatabase', '/path/to/custom/credentials.ini');
     
     // Run raw SQL query
     const results = await knex.raw('SELECT * FROM my_table WHERE id = ?', [123]);
@@ -79,3 +83,5 @@ username = your_username
 password = your_password
 connectString = hostname:port/servicename
 ```
+
+By default, linkam-db looks for `personal.db.ini` first, then falls back to `db.ini` in your project root. You can also specify a custom credentials file path as the second parameter to `db.init()`.
