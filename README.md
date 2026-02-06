@@ -1,6 +1,6 @@
 # linkam-db
 
-Oracle database wrapper using `oracledb` and `knex` with built-in Oracle Instant Client.
+A database wrapper for `knex` that simplifies database connection and querying. It includes built-in Oracle Instant Client, automatic camelCase conversion of query results, and credential management via `db.ini` configuration. Currently supports Oracle and PostgreSQL databases.
 
 ## Features
 
@@ -79,7 +79,3 @@ username = your_username
 password = your_password
 connectString = hostname:port/servicename
 ```
-
-## License
-
-ISC
